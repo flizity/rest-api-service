@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
+
 	"url-shortener/internal/storage"
 
-	"github.com/mattn/go-sqlite3"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type Storage struct {
@@ -50,10 +52,9 @@ func (s *Storage) SaveURL(urlToSave string, alias string) (int64, error) {
 
 	res, err := stmt.Exec(urlToSave, alias)
 	if err != nil {
-		if sqliteErr, ok := err.(sqlite3.Error); ok && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			return 0, fmt.Errorf("%s: %w", fn, storage.ErrURLExists)
 		}
-
 		return 0, fmt.Errorf("%s: %w", fn, err)
 	}
 
@@ -69,8 +70,7 @@ func (s *Storage) GetURL(alias string) (string, error) {
 	const op = "storage.sqlite.GetURL"
 
 	var resURL string
-	err := s.db.QueryRow("SELECT url FROM url WHERE alias = ?", alias).Scan(&resURL) // .Scan(&url) необходим для извлечения данных из результата SQL-запроса.
-
+	err := s.db.QueryRow("SELECT url FROM url WHERE alias = ?", alias).Scan(&resURL)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", storage.ErrURLNotFound
@@ -89,9 +89,9 @@ func (s *Storage) DeleteURL(alias string) (int64, error) {
 		return 0, fmt.Errorf("%s: execute statement %w", fn, err)
 	}
 
-	rowsAffected, err := result.RowsAffected() // Считаем сколько удалили
+	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return 0, fmt.Errorf("%s: get rows affected: %w", fn, err) // Возвращаем 0 и ошибку
+		return 0, fmt.Errorf("%s: get rows affected: %w", fn, err)
 	}
 
 	return rowsAffected, nil
