@@ -1,7 +1,6 @@
 # 🚀 REST API Service
 
 ![Go Version](https://img.shields.io/badge/Go-1.21%2B-blue)
-![GitHub last commit](https://img.shields.io/github/last-commit/flizity/rest-api-service)
 
 Производительный REST API сервис на Go с поддержкой стандартных HTTP методов и JSON формата.
 
